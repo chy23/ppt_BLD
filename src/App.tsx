@@ -21,6 +21,7 @@ function App() {
   const [ipImageFile, setIpImageFile] = useState<File | null>(null);
   const [isDraggingIP, setIsDraggingIP] = useState(false);
   const [visualStyle, setVisualStyle] = useState('1');
+  const [imageMode, setImageMode] = useState('none');
   const [outputFormat, setOutputFormat] = useState('B'); 
   
   // WebLLM State
@@ -85,7 +86,7 @@ function App() {
     }
   };
 
-  const generatePPTX = (slidesData: any[]) => {
+  const generatePPTX = async (slidesData: any[]) => {
     let pres = new pptxgen();
     
     // 設定不同風格的樣式參數
@@ -131,7 +132,8 @@ function App() {
         break;
     }
 
-    slidesData.forEach(slide => {
+    for (let i = 0; i < slidesData.length; i++) {
+      let slide = slidesData[i];
       let slideObj = pres.addSlide();
       slideObj.background = { color: bgColor };
       
@@ -148,6 +150,33 @@ function App() {
         });
       }
       
+      let hasImage = false;
+      if (imageMode === 'api' && slide.imagePrompt) {
+        try {
+          setInitProgress(`正在為第 ${i + 1} 頁簡報生成配圖... (約需數秒)`);
+          let styleSuffix = '';
+          if (visualStyle === '1') styleSuffix = ', anime style, cute';
+          if (visualStyle === '2') styleSuffix = ', studio ghibli style, watercolor';
+          if (visualStyle === '9') styleSuffix = ', chalk drawing style';
+          
+          const safePrompt = encodeURIComponent(slide.imagePrompt + styleSuffix);
+          const res = await fetch(`https://image.pollinations.ai/prompt/${safePrompt}?width=800&height=600&nologo=true`);
+          const blob = await res.blob();
+          const base64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          
+          slideObj.addImage({ data: base64 as string, x: '52%', y: hasHeader ? 1.2 : 1.8, w: '43%', h: 4 });
+          hasImage = true;
+        } catch (e) {
+          console.error("Image generation failed", e);
+        }
+      } else if (imageMode === 'local' && i === 0) {
+        alert("【警告】本地 WebGPU 繪圖極其消耗系統資源！本測試版本為求穩定，暫不載入 Web SD，將為您導向純文字模式。請事後改用「雲端 API」模式體驗自動配圖。");
+      }
+      
       if (slide.content) {
         // 將內容根據 \n 拆分成真正的陣列，讓 bullet 排版更美觀
         const contentLines = typeof slide.content === 'string' ? slide.content.split('\\n').filter((l: string) => l.trim()) : slide.content;
@@ -155,7 +184,7 @@ function App() {
         slideObj.addText(
           Array.isArray(contentLines) ? contentLines.map(line => ({ text: line.replace(/^[-\*•\s]+/, '') })) : slide.content, 
           { 
-            x: 0.5, y: hasHeader ? 1.2 : 1.8, w: '90%', h: 3.5, 
+            x: 0.5, y: hasHeader ? 1.2 : 1.8, w: hasImage ? '45%' : '90%', h: 3.5, 
             fontSize: 20, color: contentColor, bullet: true,
             valign: 'top', lineSpacing: 32
           }
@@ -165,9 +194,10 @@ function App() {
       if (slide.notes) {
         slideObj.addNotes(slide.notes);
       }
-    });
-
+    }
+    setInitProgress('簡報製作完成，正在匯出 PPTX 檔案...');
     pres.writeFile({ fileName: "AI_Presentation.pptx" });
+    setInitProgress('');
   };
 
   const callWebLLM = async () => {
@@ -244,7 +274,7 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
       const presentationData = await callWebLLM();
       
       if (outputFormat === 'B') {
-        generatePPTX(presentationData.slides);
+        await generatePPTX(presentationData.slides);
         setResult('🎉 成功！您的 PPTX 簡報檔已開始下載。');
       } else {
         setResult('🎉 成功生成！由於是網頁預覽版，目前僅直接輸出規劃結果：\n' + JSON.stringify(presentationData, null, 2));
@@ -476,6 +506,23 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
           </section>
 
           <hr className="border-gray-200" />
+
+          {/* Image Mode */}
+          <section className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <ImageIcon className="text-indigo-600" size={24} />
+              簡報配圖模式
+            </h2>
+            <select 
+              className="w-full p-4 border-2 border-gray-200 rounded-xl bg-white focus:border-indigo-600 outline-none transition-colors"
+              value={imageMode}
+              onChange={(e) => setImageMode(e.target.value)}
+            >
+              <option value="none">❌ 純文字模式 (預設，速度最快，不吃效能)</option>
+              <option value="api">☁️ 雲端 API 免費配圖 (強烈推薦，效果佳且零硬體負擔)</option>
+              <option value="local">💻 本地 WebGPU 離線生圖 (⚠️ 極度消耗記憶體，測試版實驗功能)</option>
+            </select>
+          </section>
 
           {/* 4. Output Format */}
           <section>
