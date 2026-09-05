@@ -17,6 +17,7 @@ function App() {
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [textMode, setTextMode] = useState('A');
   const [useIP, setUseIP] = useState(false);
+  const [ipImageFile, setIpImageFile] = useState<File | null>(null);
   const [visualStyle, setVisualStyle] = useState('1');
   const [outputFormat, setOutputFormat] = useState('B'); 
   
@@ -373,12 +374,23 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
             </label>
 
             {useIP && (
-              <div className="mt-4 p-6 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
-                <ImageIcon className="text-gray-400 mb-2" size={32} />
-                <span className="text-sm font-medium text-gray-600">點擊上傳人物照片或角色參考圖</span>
+              <label className="mt-4 p-6 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer block text-center">
+                <ImageIcon className="text-gray-400 mb-2 mx-auto" size={32} />
+                <span className="text-sm font-medium text-gray-600">
+                  {ipImageFile ? `已選擇圖片：${ipImageFile.name}` : '點擊上傳人物照片或角色參考圖'}
+                </span>
                 <span className="text-xs text-gray-400 mt-1">支援 PNG, JPG</span>
-                <input type="file" className="hidden" accept="image/*" />
-              </div>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setIpImageFile(e.target.files[0]);
+                    }
+                  }}
+                />
+              </label>
             )}
           </section>
 
