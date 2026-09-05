@@ -40,7 +40,21 @@ function App() {
 
   const handleSourceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSourceFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setSourceFile(file);
+      
+      // 若為文字檔，直接讀取內容填入 sourceText
+      if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.csv') || file.type.startsWith('text/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target && typeof e.target.result === 'string') {
+            setSourceText(e.target.result);
+          }
+        };
+        reader.readAsText(file);
+      } else {
+        alert("提示：網頁版目前無法直接解析 PDF / Word 內容。為獲得最佳效果，建議您直接『複製貼上』文字到下方的文字框中！");
+      }
     }
   };
 
@@ -208,28 +222,29 @@ function App() {
     setStreamText('');
 
     const prompt = `
-你是一個專業的 AI 簡報生成助理。請根據使用者提供的來源內容，設計出一份【內容豐富、結構完整、具備深度】的簡報。
+你是一個專業的 AI 簡報生成助理。請【嚴格】根據以下提供的來源內容，設計出一份簡報。絕對不可以自己發明與來源無關的內容！
 
 【任務指示】：
-1. 深入解析來源內容：請不要只做簡單的摘要。必須萃取出核心概念、重要細節、範例與數據，將其擴充並組織成完整的簡報邏輯（例如：破題引言 -> 核心觀點解析 -> 案例或細節探討 -> 總結與呼籲）。
-2. 豐富的頁面內容：每一頁的 \`content\` 必須包含 3 到 5 個具體的條列式重點，請用 '\\n' 換行符號隔開，絕對不能只有空洞的一兩句話。
-3. 專業的演講備忘錄：每一頁的 \`notes\` 請寫出講者在該頁應該說的詳細口白草稿，或是畫面的設計建議。
+1. 深入解析來源內容：必須萃取出核心概念與重點，將其組織成簡報邏輯。若來源內容很少，請適度擴充相關背景知識；若來源內容很多，請摘要。
+2. 頁面內容：每一頁的 \`content\` 包含 3 到 5 個具體的條列式重點，請用 '\\n' 換行。
+3. 英文配圖提示詞：每一頁都必須在 \`imagePrompt\` 欄位提供一句【純英文】的畫面描述，這將用來呼叫 AI 繪圖 API (例如: "A cute dog playing in a futuristic park, highly detailed")。
 
 文字處理方式：${textMode} (A: 完整保留, B: 協助潤飾, C: 摘要並擴充細節)
-視覺風格設定：${visualStyle} (請在 notes 中給出符合此風格的排版或配圖建議)
+視覺風格設定：${visualStyle}
 是否使用人物IP：${useIP}
 
-【簡報來源內容】：
-${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + sourceFile.name + ' 生成一個展示範例內容' : '')}
+【簡報來源內容 (請嚴格根據此內容撰寫)】：
+${sourceText || (sourceFile ? '使用者上傳了檔案 (檔名: ' + sourceFile.name + ')，但目前網頁版無法直接解析 PDF/Word。請以該檔名為主題，生成一份展示用的範例簡報。' : '')}
 
-【絕對要求】：務必嚴格以 JSON 格式回傳，不得包含任何額外的對話文字或 markdown 語法 (例如 \`\`\`json)。若無法生成完整內容，也必須保持 JSON 括號閉合。
+【絕對要求】：務必嚴格以 JSON 格式回傳，不得包含任何額外的對話文字或 markdown 語法 (例如 \`\`\`json)。
 回傳格式必須完全符合以下結構：
 {
   "slides": [
     {
-      "title": "具吸引力的單頁標題",
-      "content": "詳細的條列式重點一\\n詳細的條列式重點二\\n詳細的條列式重點三",
-      "notes": "講者口白與畫面設計建議..."
+      "title": "單頁標題",
+      "content": "重點一\\n重點二\\n重點三",
+      "notes": "講者口白",
+      "imagePrompt": "English prompt for image generation..."
     }
   ]
 }
@@ -383,7 +398,19 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
                     e.preventDefault();
                     setIsDraggingSource(false);
                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                      setSourceFile(e.dataTransfer.files[0]);
+                      const file = e.dataTransfer.files[0];
+                      setSourceFile(file);
+                      if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.csv') || file.type.startsWith('text/')) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          if (ev.target && typeof ev.target.result === 'string') {
+                            setSourceText(ev.target.result);
+                          }
+                        };
+                        reader.readAsText(file);
+                      } else {
+                        alert("提示：網頁版目前無法直接解析 PDF / Word 內容。為獲得最佳效果，建議您直接『複製貼上』文字到下方的文字框中！");
+                      }
                     }
                   }}
                   className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl transition-colors cursor-pointer ${isDraggingSource ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300 hover:bg-indigo-50 hover:border-indigo-400'}`}
