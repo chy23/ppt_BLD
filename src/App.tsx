@@ -28,6 +28,7 @@ function App() {
   const [initProgress, setInitProgress] = useState('');
   
   const [isGenerating, setIsGenerating] = useState(false);
+  const [streamText, setStreamText] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +70,14 @@ function App() {
     }
   };
 
+  const handleInterrupt = () => {
+    if (engine) {
+      engine.interruptGenerate();
+      setIsGenerating(false);
+      setError("已由使用者中斷生成。");
+    }
+  };
+
   const generatePPTX = (slidesData: any[]) => {
     let pres = new pptxgen();
     
@@ -97,9 +106,12 @@ function App() {
 
   const callWebLLM = async () => {
     if (!engine) throw new Error("引擎尚未加載");
+    setStreamText('');
 
     const prompt = `
-你是一個 AI 簡報生成助理。請根據以下資訊建立簡報結構，並**務必以嚴格的 JSON 格式回傳**。
+你是一個 AI 簡報生成助理。請根據以下資訊建立簡報結構。
+【絕對要求】：務必嚴格以 JSON 格式回傳，不得包含任何額外的對話文字或 markdown 語法。若無法生成完整內容，也必須保持 JSON 括號閉合。
+
 文字處理方式：${textMode} (A: 完整保留, B: 潤飾, C: 摘要)
 視覺風格：${visualStyle}
 是否使用人物IP：${useIP}
@@ -107,7 +119,7 @@ function App() {
 簡報來源內容：
 ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + sourceFile.name + ' 生成一個展示範例內容' : '')}
 
-請回傳純 JSON 字串，不要包含任何 markdown 語法 (例如 \`\`\`json)，格式如下：
+回傳格式範例：
 {
   "slides": [
     {
@@ -119,15 +131,21 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
 }
 `;
 
-    const reply = await engine.chat.completions.create({
+    const asyncChunkGenerator = await engine.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
+      stream: true
     });
 
-    const textResp = reply.choices[0].message.content;
-    
-    let jsonStr = textResp;
-    const jsonMatch = textResp.match(/\{[\s\S]*\}/);
+    let fullText = "";
+    for await (const chunk of asyncChunkGenerator) {
+      const delta = chunk.choices[0]?.delta?.content || "";
+      fullText += delta;
+      setStreamText(fullText);
+    }
+
+    let jsonStr = fullText;
+    const jsonMatch = fullText.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       jsonStr = jsonMatch[0];
     }
@@ -135,8 +153,8 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
     try {
       return JSON.parse(jsonStr);
     } catch (parseErr) {
-      console.log("Raw output:", textResp);
-      throw new Error("模型回傳的格式非有效 JSON，請再試一次。回傳內容為：" + textResp.substring(0, 100) + "...");
+      console.log("Raw output:", fullText);
+      throw new Error("模型回傳的格式非有效 JSON (小型模型易發生此問題)。回傳內容為：\\n" + fullText.substring(0, 200) + "...");
     }
   };
 
@@ -380,7 +398,13 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
             </div>
           )}
 
-          {result && (
+          {isGenerating && streamText && (
+            <div className="bg-gray-800 text-green-400 p-4 rounded-xl shadow-inner font-mono text-sm overflow-y-auto max-h-64 whitespace-pre-wrap">
+              {streamText}
+            </div>
+          )}
+
+          {result && !isGenerating && (
             <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4">
               <CheckCircle className="inline-block mr-2" size={20} />
               <span className="font-medium">完成！</span>
@@ -390,15 +414,27 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={isGenerating || (!sourceText && !sourceFile) || !engine}
-            className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-          >
-            {isGenerating ? (
-              <span className="flex items-center gap-2"><Loader2 className="animate-spin" /> 本地 WebLLM 推論中...</span>
-            ) : '開始產生簡報 / 規劃'}
-          </button>
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              disabled={isGenerating || (!sourceText && !sourceFile) || !engine}
+              className="flex-1 flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {isGenerating ? (
+                <span className="flex items-center gap-2"><Loader2 className="animate-spin" /> 正在串流生成中...</span>
+              ) : '開始產生簡報 / 規劃'}
+            </button>
+            
+            {isGenerating && (
+              <button
+                type="button"
+                onClick={handleInterrupt}
+                className="py-4 px-6 border border-red-500 rounded-xl shadow-sm text-lg font-medium text-red-500 hover:bg-red-50 transition-colors"
+              >
+                停止生成
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>
