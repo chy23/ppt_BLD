@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.84",
+    "jsdom": "^30.0.1",
+    "mammoth": "^1.12.2",
     "pptxgenjs": "^4.0.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"

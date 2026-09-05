@@ -37,13 +37,21 @@ function App() {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSourceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSourceFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSourceFile(file);
       
-      // 若為文字檔，直接讀取內容填入 sourceText
-      if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.csv') || file.type.startsWith('text/')) {
+      if (file.name.endsWith('.docx')) {
+        try {
+          const mammoth = await import('mammoth');
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          setSourceText(result.value);
+        } catch (err) {
+          alert("Word 檔解析失敗，請直接複製文字貼上。");
+        }
+      } else if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.csv') || file.type.startsWith('text/')) {
         const reader = new FileReader();
         reader.onload = (e) => {
           if (e.target && typeof e.target.result === 'string') {
@@ -52,7 +60,7 @@ function App() {
         };
         reader.readAsText(file);
       } else {
-        alert("提示：網頁版目前無法直接解析 PDF / Word 內容。為獲得最佳效果，建議您直接『複製貼上』文字到下方的文字框中！");
+        alert("提示：網頁版目前只能直接解析 Word(.docx) 與純文字檔。PDF 為獲得最佳效果，建議您直接『複製貼上』！");
       }
     }
   };
@@ -396,13 +404,22 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案 (檔名: ' + sourceFile.
                   htmlFor="source-file"
                   onDragOver={(e) => { e.preventDefault(); setIsDraggingSource(true); }}
                   onDragLeave={(e) => { e.preventDefault(); setIsDraggingSource(false); }}
-                  onDrop={(e) => {
+                  onDrop={async (e) => {
                     e.preventDefault();
                     setIsDraggingSource(false);
                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                       const file = e.dataTransfer.files[0];
                       setSourceFile(file);
-                      if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.csv') || file.type.startsWith('text/')) {
+                      if (file.name.endsWith('.docx')) {
+                        try {
+                          const mammoth = await import('mammoth');
+                          const arrayBuffer = await file.arrayBuffer();
+                          const result = await mammoth.extractRawText({ arrayBuffer });
+                          setSourceText(result.value);
+                        } catch (err) {
+                          alert("Word 檔解析失敗，請直接複製文字貼上。");
+                        }
+                      } else if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.csv') || file.type.startsWith('text/')) {
                         const reader = new FileReader();
                         reader.onload = (ev) => {
                           if (ev.target && typeof ev.target.result === 'string') {
@@ -411,7 +428,7 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案 (檔名: ' + sourceFile.
                         };
                         reader.readAsText(file);
                       } else {
-                        alert("提示：網頁版目前無法直接解析 PDF / Word 內容。為獲得最佳效果，建議您直接『複製貼上』文字到下方的文字框中！");
+                        alert("提示：網頁版目前只能直接解析 Word(.docx) 與純文字檔。PDF 為獲得最佳效果，建議您直接『複製貼上』！");
                       }
                     }
                   }}
