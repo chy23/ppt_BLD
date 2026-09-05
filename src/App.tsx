@@ -23,7 +23,7 @@ function App() {
   const [ipImageFile, setIpImageFile] = useState<File | null>(null);
   const [isDraggingIP, setIsDraggingIP] = useState(false);
   const [visualStyle, setVisualStyle] = useState('1');
-  const [imageMode, setImageMode] = useState('none');
+  const [imageMode, setImageMode] = useState('api');
   const [outputFormat, setOutputFormat] = useState('B'); 
   
   // WebLLM State
@@ -178,7 +178,9 @@ function App() {
       }
       
       let hasImage = false;
-      if (imageMode === 'api' && slide.imagePrompt) {
+      const promptToUse = slide.imagePrompt || `${slide.title} professional illustration`;
+      
+      if (imageMode === 'api') {
         try {
           setInitProgress(`正在為第 ${i + 1} 頁簡報生成配圖... (約需數秒)`);
           let styleSuffix = '';
@@ -186,7 +188,7 @@ function App() {
           if (visualStyle === '2') styleSuffix = ', studio ghibli style, watercolor';
           if (visualStyle === '9') styleSuffix = ', chalk drawing style';
           
-          const safePrompt = encodeURIComponent(slide.imagePrompt + styleSuffix);
+          const safePrompt = encodeURIComponent(promptToUse + styleSuffix);
           const res = await fetch(`https://image.pollinations.ai/prompt/${safePrompt}?width=800&height=600&nologo=true`);
           const blob = await res.blob();
           const base64 = await new Promise((resolve) => {
