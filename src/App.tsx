@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, FileText, Settings, CheckCircle, Presentation, Table2, FileUp, Cpu, Loader2, Paintbrush, Image as ImageIcon } from 'lucide-react';
-import pptxgen from "pptxgenjs";
-import { CreateMLCEngine } from "@mlc-ai/web-llm";
+
 
 const AVAILABLE_MODELS = [
   { id: "gemma3-1b-it-q4f16_1-MLC", name: "Gemma 3 (1B) (Google, 美國) - 預設推薦", hint: "【預設推薦】硬體需求極低。Google 最新的極輕量模型，速度極快，能瞬間載入，適合測試與一般任務。" },
@@ -77,6 +76,7 @@ function App() {
     setError(null);
     setInitProgress('');
     try {
+      const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
       const newEngine = await CreateMLCEngine(selectedModelStr, {
         initProgressCallback: (info) => {
           if (info && info.text) {
@@ -104,7 +104,8 @@ function App() {
   };
 
   const generatePPTX = async (slidesData: any[]) => {
-    let pres = new pptxgen();
+    const PptxGenJS = (await import("pptxgenjs")).default;
+    let pres = new PptxGenJS();
     
     // 設定不同風格的樣式參數
     let bgColor = 'FFFFFF';
