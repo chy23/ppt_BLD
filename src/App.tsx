@@ -76,6 +76,7 @@ function App() {
     setError(null);
     setInitProgress('');
     try {
+      setInitProgress("正在從伺服器下載 AI 引擎核心模組 (約 6MB)，請稍候...");
       const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
       const newEngine = await CreateMLCEngine(selectedModelStr, {
         initProgressCallback: (info) => {
