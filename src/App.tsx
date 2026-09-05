@@ -3,8 +3,8 @@ import { Upload, FileText, Settings, CheckCircle, Presentation, Table2, FileUp, 
 
 
 const AVAILABLE_MODELS = [
-  { id: "gemma3-1b-it-q4f16_1-MLC", name: "Gemma 3 (1B) (Google, 美國) - 預設推薦", hint: "【預設推薦】硬體需求極低。Google 最新的極輕量模型，速度極快，能瞬間載入，適合測試與一般任務。" },
-  { id: "Llama-3.2-1B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (1B) (Meta, 美國)", hint: "【限制與建議】硬體需求極低。適合絕大多數手機與文書筆電。反應迅速，適合簡單日常寫作任務。" },
+  { id: "Llama-3.2-1B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (1B) (Meta, 美國) - 預設推薦", hint: "【預設推薦】極度輕量、穩定且快速。適合絕大多數手機與文書筆電。反應迅速，絕佳的測試首選。" },
+  { id: "gemma3-1b-it-q4f16_1-MLC", name: "Gemma 3 (1B) (Google, 美國)", hint: "【注意】目前的 WebLLM 版本對此模型有組態衝突 (sliding_window_size 錯誤)，暫時不建議使用。" },
   { id: "Phi-3.5-mini-instruct-q4f16_1-MLC", name: "Phi-3.5 mini (Microsoft, 美國)", hint: "【限制與建議】微軟推出的輕量模型，效能高，中英混合處理能力不錯。" },
   { id: "Phi-4-mini-instruct-q4f16_1-MLC", name: "Phi-4 mini (Microsoft, 美國)", hint: "【限制與建議】微軟最新一代輕量模型，邏輯推理能力顯著提升。" },
   { id: "Llama-3.2-3B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (3B) (Meta, 美國)", hint: "【限制與建議】硬體需求中 (需 3~4GB 記憶體)。適合中階電腦，中文能力不錯且速度較快。" },
