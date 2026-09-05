@@ -3,6 +3,16 @@ import { Upload, FileText, Settings, CheckCircle, Presentation, Table2, FileUp, 
 import pptxgen from "pptxgenjs";
 import { CreateMLCEngine } from "@mlc-ai/web-llm";
 
+const AVAILABLE_MODELS = [
+  { id: "gemma3-1b-it-q4f16_1-MLC", name: "Gemma 3 (1B) (Google, 美國)", hint: "【限制與建議】硬體需求極低。適合絕大多數手機與文書筆電。速度極快，但邏輯推論與長文生成較弱。" },
+  { id: "Llama-3.2-1B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (1B) (Meta, 美國)", hint: "【限制與建議】硬體需求極低。適合絕大多數手機與文書筆電。反應迅速，適合簡單日常寫作任務。" },
+  { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", name: "Qwen2.5 (1.5B) (中文極速)", hint: "【限制與建議】硬體需求極低。中文處理能力優秀，速度極快。" },
+  { id: "gemma-2-2b-it-q4f16_1-MLC", name: "Gemma 2 (2B) (Google, 美國)", hint: "【限制與建議】硬體需求低。約需 2GB 記憶體，適合一般筆電。回答品質與細節較 1B 模型提升不少。" },
+  { id: "Llama-3.2-3B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (3B) (Meta, 美國)", hint: "【限制與建議】硬體需求中。約需 3-4GB 記憶體。適合較新規格的電腦或高階手機，邏輯能力佳。" },
+  { id: "Llama-3.1-8B-Instruct-q4f16_1-MLC", name: "Llama 3.1 (8B) (Meta, 美國)", hint: "【限制與建議】硬體需求高。需 8GB 以上記憶體與強大獨立顯卡。運算負載重，但能處理最複雜的寫作與邏輯推演。" },
+  { id: "Qwen2.5-7B-Instruct-q4f16_1-MLC", name: "Qwen2.5 (7B) (中文高品質)", hint: "【限制與建議】硬體需求高。需 6GB 以上記憶體與強大獨立顯卡。中文表現最佳的模型之一。" }
+];
+
 function App() {
   const [sourceText, setSourceText] = useState('');
   const [sourceFile, setSourceFile] = useState<File | null>(null);
@@ -12,7 +22,7 @@ function App() {
   const [outputFormat, setOutputFormat] = useState('B'); 
   
   // WebLLM State
-  const [selectedModelStr, setSelectedModelStr] = useState('Qwen2.5-7B-Instruct-q4f16_1-MLC'); 
+  const [selectedModelStr, setSelectedModelStr] = useState(AVAILABLE_MODELS[2].id); // 預設 Qwen2.5 1.5B 比較保險
   const [engine, setEngine] = useState<any>(null);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
   const [initProgress, setInitProgress] = useState('');
@@ -27,20 +37,33 @@ function App() {
     }
   };
 
+  const translateProgress = (text: string) => {
+    let t = text;
+    t = t.replace('Fetching param cache', '下載模型參數快取');
+    t = t.replace('MB fetched.', 'MB 已下載。');
+    t = t.replace('completed,', '完成，');
+    t = t.replace('secs elapsed.', '秒經過。');
+    t = t.replace('It can take a while when we first visit this page to populate the cache.', '初次載入需要較長時間下載數 GB 的模型檔案。');
+    t = t.replace('Later refreshes will become faster.', '未來再次開啟網頁將會直接從本機快取讀取，速度會大幅加快。');
+    t = t.replace('Loading model from cache', '從本機快取讀取模型');
+    t = t.replace('Finish loading', '載入完成');
+    return t;
+  };
+
   const loadModel = async () => {
     setIsLoadingModel(true);
     setError(null);
     try {
       const newEngine = await CreateMLCEngine(selectedModelStr, {
         initProgressCallback: (info) => {
-          setInitProgress(info.text);
+          setInitProgress(translateProgress(info.text));
         }
       });
       setEngine(newEngine);
       setInitProgress("✅ 模型加載完成！");
     } catch (err: any) {
       console.error(err);
-      setError("無法加載模型。請確保您的瀏覽器支援 WebGPU，或者嘗試其他較小的模型。\n詳細錯誤: " + err.message);
+      setError("無法加載模型。請確認您的硬體是否支援 WebGPU，或更換較小的模型。\n詳細錯誤: " + err.message);
     } finally {
       setIsLoadingModel(false);
     }
@@ -144,6 +167,8 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
     }
   };
 
+  const selectedModelObj = AVAILABLE_MODELS.find(m => m.id === selectedModelStr);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -169,28 +194,35 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
               模型將下載至您的瀏覽器快取中，並利用您的裝置硬體進行運算。第一次下載可能需要數分鐘時間。
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <select 
-                className="flex-1 rounded-lg border border-indigo-300 px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                value={selectedModelStr}
-                onChange={(e) => setSelectedModelStr(e.target.value)}
-                disabled={engine != null || isLoadingModel}
-              >
-                <option value="Qwen2.5-7B-Instruct-q4f16_1-MLC">Qwen2.5 7B (中文推薦, 需約 4GB VRAM)</option>
-                <option value="Llama-3.1-8B-Instruct-q4f32_1-MLC">Llama 3.1 8B (需約 4.5GB VRAM)</option>
-                <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5 mini (極速輕量, 需約 2GB VRAM)</option>
-                <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5 1.5B (極速中文, 需約 1GB VRAM)</option>
-              </select>
+            <div className="flex flex-col mb-4 gap-2">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <select 
+                  className="flex-1 rounded-lg border border-indigo-300 px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  value={selectedModelStr}
+                  onChange={(e) => setSelectedModelStr(e.target.value)}
+                  disabled={engine != null || isLoadingModel}
+                >
+                  {AVAILABLE_MODELS.map(model => (
+                    <option key={model.id} value={model.id}>{model.name}</option>
+                  ))}
+                </select>
+                
+                <button
+                  type="button"
+                  onClick={loadModel}
+                  disabled={isLoadingModel || engine != null}
+                  className="whitespace-nowrap px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2 justify-center"
+                >
+                  {isLoadingModel && <Loader2 size={16} className="animate-spin" />}
+                  {engine ? '已加載' : (isLoadingModel ? '下載/加載中...' : '載入模型')}
+                </button>
+              </div>
               
-              <button
-                type="button"
-                onClick={loadModel}
-                disabled={isLoadingModel || engine != null}
-                className="whitespace-nowrap px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-              >
-                {isLoadingModel && <Loader2 size={16} className="animate-spin" />}
-                {engine ? '已加載' : (isLoadingModel ? '下載/加載中...' : '載入模型')}
-              </button>
+              {selectedModelObj && (
+                <p className="text-xs text-indigo-600 mt-1">
+                  {selectedModelObj.hint}
+                </p>
+              )}
             </div>
 
             {initProgress && (
