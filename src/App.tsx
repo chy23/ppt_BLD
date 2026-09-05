@@ -88,19 +88,78 @@ function App() {
   const generatePPTX = (slidesData: any[]) => {
     let pres = new pptxgen();
     
+    // 設定不同風格的樣式參數
+    let bgColor = 'FFFFFF';
+    let titleColor = '363636';
+    let contentColor = '666666';
+    let hasHeader = false;
+    let headerColor = '4F46E5';
+
+    switch(visualStyle) {
+      case '1': // 日式 Q 版漫畫風格 (粉彩)
+        bgColor = 'FFF0F5';
+        titleColor = 'FF69B4';
+        contentColor = '555555';
+        break;
+      case '2': // 吉卜力溫暖插畫風 (暖綠)
+        bgColor = 'F4F7F2';
+        titleColor = '2E5339';
+        contentColor = '4A4A4A';
+        break;
+      case '6': // 商務簡潔風
+        bgColor = 'FFFFFF';
+        titleColor = '1E3A8A';
+        contentColor = '333333';
+        hasHeader = true;
+        headerColor = '1E3A8A';
+        break;
+      case '9': // 黑板教室風
+        bgColor = '2F4F4F';
+        titleColor = 'FFFFFF';
+        contentColor = 'E0E0E0';
+        break;
+      case '10': // Canva 繽紛簡報風
+        bgColor = 'F3F4F6';
+        titleColor = '7C3AED';
+        contentColor = '4B5563';
+        hasHeader = true;
+        headerColor = 'FCD34D';
+        break;
+      default:
+        bgColor = 'FFFFFF';
+        titleColor = '363636';
+        break;
+    }
+
     slidesData.forEach(slide => {
       let slideObj = pres.addSlide();
+      slideObj.background = { color: bgColor };
       
-      slideObj.addText(slide.title || '', { 
-        x: 0.5, y: 0.5, w: '90%', h: 1, 
-        fontSize: 24, bold: true, color: '363636' 
-      });
+      if (hasHeader) {
+        slideObj.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: '100%', h: 0.8, fill: { color: headerColor } });
+        slideObj.addText(slide.title || '', { 
+          x: 0.5, y: 0.1, w: '90%', h: 0.6, 
+          fontSize: 28, bold: true, color: (visualStyle === '6' ? 'FFFFFF' : '111827') 
+        });
+      } else {
+        slideObj.addText(slide.title || '', { 
+          x: 0.5, y: 0.5, w: '90%', h: 1, 
+          fontSize: 28, bold: true, color: titleColor 
+        });
+      }
       
       if (slide.content) {
-        slideObj.addText(slide.content, { 
-          x: 0.5, y: 1.8, w: '90%', h: 3, 
-          fontSize: 18, color: '666666', bullet: true 
-        });
+        // 將內容根據 \n 拆分成真正的陣列，讓 bullet 排版更美觀
+        const contentLines = typeof slide.content === 'string' ? slide.content.split('\\n').filter((l: string) => l.trim()) : slide.content;
+        
+        slideObj.addText(
+          Array.isArray(contentLines) ? contentLines.map(line => ({ text: line.replace(/^[-\*•\s]+/, '') })) : slide.content, 
+          { 
+            x: 0.5, y: hasHeader ? 1.2 : 1.8, w: '90%', h: 3.5, 
+            fontSize: 20, color: contentColor, bullet: true,
+            valign: 'top', lineSpacing: 32
+          }
+        );
       }
       
       if (slide.notes) {
