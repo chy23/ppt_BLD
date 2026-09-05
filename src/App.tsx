@@ -6,7 +6,9 @@ import { CreateMLCEngine } from "@mlc-ai/web-llm";
 const AVAILABLE_MODELS = [
   { id: "Llama-3.1-8B-Instruct-q4f16_1-MLC", name: "Llama 3.1 (8B) (Meta, 美國) - 推薦", hint: "【推薦使用】硬體需求高 (需 8GB+ 記憶體)。Meta 開源的強大模型，中文處理與邏輯擴寫能力俱佳，能產生豐富不空洞的簡報。" },
   { id: "Llama-3.2-3B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (3B) (Meta, 美國)", hint: "【限制與建議】硬體需求中 (需 3~4GB 記憶體)。適合中階電腦，中文能力不錯且速度較快。" },
+  { id: "gemma3-12b-it-q4f16_1-MLC", name: "Gemma 3 (12B) (Google, 美國)", hint: "【限制與建議】硬體需求極高。Google 最新一代大語言模型，具備極強的中文寫作與深層邏輯解析能力，需 12GB+ 高階顯卡。" },
   { id: "gemma-2-9b-it-q4f16_1-MLC", name: "Gemma 2 (9B) (Google, 美國)", hint: "【限制與建議】硬體需求最高。Google 的強大模型，中文細節豐富，但需極高的獨立顯卡硬體。" },
+  { id: "gemma3-4b-it-q4f16_1-MLC", name: "Gemma 3 (4B) (Google, 美國)", hint: "【限制與建議】硬體需求中高。Google 最新一代模型，效能與準確度的極佳平衡點，需 4GB~6GB VRAM。" },
   { id: "gemma-2-2b-it-q4f16_1-MLC", name: "Gemma 2 (2B) (Google, 美國)", hint: "【限制與建議】硬體需求低。輕量級選項，處理簡單中文尚可，但生成複雜簡報時結構可能較單薄。" },
   { id: "gemma3-1b-it-q4f16_1-MLC", name: "Gemma 3 (1B) (Google, 美國)", hint: "【限制與建議】硬體需求極低。Google 最新的極輕量模型，速度極快，適合所有手機與文書筆電，但複雜邏輯推論較弱。" },
   { id: "Phi-3.5-mini-instruct-q4f16_1-MLC", name: "Phi-3.5 mini (Microsoft, 美國)", hint: "【限制與建議】微軟推出的輕量模型，效能高，中英混合處理能力不錯。" }
