@@ -4,13 +4,11 @@ import pptxgen from "pptxgenjs";
 import { CreateMLCEngine } from "@mlc-ai/web-llm";
 
 const AVAILABLE_MODELS = [
-  { id: "gemma3-1b-it-q4f16_1-MLC", name: "Gemma 3 (1B) (Google, 美國)", hint: "【限制與建議】硬體需求極低。適合絕大多數手機與文書筆電。速度極快，但邏輯推論與長文生成較弱。" },
-  { id: "Llama-3.2-1B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (1B) (Meta, 美國)", hint: "【限制與建議】硬體需求極低。適合絕大多數手機與文書筆電。反應迅速，適合簡單日常寫作任務。" },
-  { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", name: "Qwen2.5 (1.5B) (中文極速)", hint: "【限制與建議】硬體需求極低。中文處理能力優秀，速度極快。" },
-  { id: "gemma-2-2b-it-q4f16_1-MLC", name: "Gemma 2 (2B) (Google, 美國)", hint: "【限制與建議】硬體需求低。約需 2GB 記憶體，適合一般筆電。回答品質與細節較 1B 模型提升不少。" },
-  { id: "Llama-3.2-3B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (3B) (Meta, 美國)", hint: "【限制與建議】硬體需求中。約需 3-4GB 記憶體。適合較新規格的電腦或高階手機，邏輯能力佳。" },
-  { id: "Llama-3.1-8B-Instruct-q4f16_1-MLC", name: "Llama 3.1 (8B) (Meta, 美國)", hint: "【限制與建議】硬體需求高。需 8GB 以上記憶體與強大獨立顯卡。運算負載重，但能處理最複雜的寫作與邏輯推演。" },
-  { id: "Qwen2.5-7B-Instruct-q4f16_1-MLC", name: "Qwen2.5 (7B) (中文高品質)", hint: "【限制與建議】硬體需求高。需 6GB 以上記憶體與強大獨立顯卡。中文表現最佳的模型之一。" }
+  { id: "Llama-3.1-8B-Instruct-q4f16_1-MLC", name: "Llama 3.1 (8B) (Meta, 美國) - 推薦", hint: "【推薦使用】硬體需求高 (需 8GB+ 記憶體)。Meta 開源的強大模型，中文處理與邏輯擴寫能力俱佳，能產生豐富不空洞的簡報。" },
+  { id: "Llama-3.2-3B-Instruct-q4f16_1-MLC", name: "Llama 3.2 (3B) (Meta, 美國)", hint: "【限制與建議】硬體需求中 (需 3~4GB 記憶體)。適合中階電腦，中文能力不錯且速度較快。" },
+  { id: "gemma-2-9b-it-q4f16_1-MLC", name: "Gemma 2 (9B) (Google, 美國)", hint: "【限制與建議】硬體需求最高。Google 的強大模型，中文細節豐富，但需極高的獨立顯卡硬體。" },
+  { id: "gemma-2-2b-it-q4f16_1-MLC", name: "Gemma 2 (2B) (Google, 美國)", hint: "【限制與建議】硬體需求低。輕量級選項，處理簡單中文尚可，但生成複雜簡報時結構可能較單薄。" },
+  { id: "Phi-3.5-mini-instruct-q4f16_1-MLC", name: "Phi-3.5 mini (Microsoft, 美國)", hint: "【限制與建議】微軟推出的輕量模型，效能高，中英混合處理能力不錯。" }
 ];
 
 function App() {
@@ -22,7 +20,7 @@ function App() {
   const [outputFormat, setOutputFormat] = useState('B'); 
   
   // WebLLM State
-  const [selectedModelStr, setSelectedModelStr] = useState(AVAILABLE_MODELS[2].id); // 預設 Qwen2.5 1.5B 比較保險
+  const [selectedModelStr, setSelectedModelStr] = useState(AVAILABLE_MODELS[0].id); // 預設使用 Llama 3.1 8B
   const [engine, setEngine] = useState<any>(null);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
   const [initProgress, setInitProgress] = useState('');
