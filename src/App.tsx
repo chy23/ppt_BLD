@@ -265,6 +265,7 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案 (檔名: ' + sourceFile.
     const asyncChunkGenerator = await engine.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
+      response_format: { type: "json_object" },
       stream: true
     });
 
