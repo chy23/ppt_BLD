@@ -15,9 +15,11 @@ const AVAILABLE_MODELS = [
 function App() {
   const [sourceText, setSourceText] = useState('');
   const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [isDraggingSource, setIsDraggingSource] = useState(false);
   const [textMode, setTextMode] = useState('A');
   const [useIP, setUseIP] = useState(false);
   const [ipImageFile, setIpImageFile] = useState<File | null>(null);
+  const [isDraggingIP, setIsDraggingIP] = useState(false);
   const [visualStyle, setVisualStyle] = useState('1');
   const [outputFormat, setOutputFormat] = useState('B'); 
   
@@ -283,11 +285,20 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
                 />
                 <label 
                   htmlFor="source-file"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl hover:bg-indigo-50 hover:border-indigo-400 transition-colors cursor-pointer bg-white"
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingSource(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); setIsDraggingSource(false); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingSource(false);
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      setSourceFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl transition-colors cursor-pointer ${isDraggingSource ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300 hover:bg-indigo-50 hover:border-indigo-400'}`}
                 >
-                  <FileUp className="text-indigo-500 mb-2" size={28} />
+                  <FileUp className={`mb-2 ${isDraggingSource ? 'text-indigo-600 scale-110 transition-transform' : 'text-indigo-500'}`} size={28} />
                   <span className="text-sm font-medium text-gray-700">
-                    {sourceFile ? `已選擇檔案：${sourceFile.name}` : '點擊上傳檔案 (本測試版暫不實作前端檔案解析)'}
+                    {sourceFile ? `已選擇檔案：${sourceFile.name}` : (isDraggingSource ? '放開滑鼠以上傳' : '點擊或拖曳上傳檔案')}
                   </span>
                 </label>
               </div>
@@ -374,10 +385,21 @@ ${sourceText || (sourceFile ? '使用者上傳了檔案，請根據檔名 ' + so
             </label>
 
             {useIP && (
-              <label className="mt-4 p-6 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer block text-center">
-                <ImageIcon className="text-gray-400 mb-2 mx-auto" size={32} />
+              <label 
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingIP(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setIsDraggingIP(false); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingIP(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    setIpImageFile(e.dataTransfer.files[0]);
+                  }
+                }}
+                className={`mt-4 p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors cursor-pointer block text-center ${isDraggingIP ? 'bg-indigo-100 border-indigo-500' : 'bg-gray-50 border-gray-300 hover:bg-gray-100'}`}
+              >
+                <ImageIcon className={`mb-2 mx-auto ${isDraggingIP ? 'text-indigo-600 scale-110 transition-transform' : 'text-gray-400'}`} size={32} />
                 <span className="text-sm font-medium text-gray-600">
-                  {ipImageFile ? `已選擇圖片：${ipImageFile.name}` : '點擊上傳人物照片或角色參考圖'}
+                  {ipImageFile ? `已選擇圖片：${ipImageFile.name}` : (isDraggingIP ? '放開滑鼠以上傳圖片' : '點擊或拖曳上傳人物照片或角色參考圖')}
                 </span>
                 <span className="text-xs text-gray-400 mt-1">支援 PNG, JPG</span>
                 <input 
